@@ -1,0 +1,530 @@
+{
+  "info": {
+    "_postman_id": "b2e7c9a4-1f3d-4c8a-9e21-copa2026fd000",
+    "name": "Copa 2026 — football-data.org v4",
+    "description": "Coleção completa da API football-data.org (v4) focada na Copa do Mundo (competition = WC).\n\n## Como usar\n1. A autenticação já está configurada no nível da coleção: header `X-Auth-Token` = `{{token}}`.\n2. A variável `token` já vem preenchida com sua key. Para trocar: aba **Variables** da coleção.\n3. Variáveis úteis já preenchidas: `competition` (WC), `competitionId` (2000), `teamId` (764 = Brasil), `matchId` (exemplo).\n\n## Observações\n- Plano gratuito: limite de **10 chamadas/minuto**.\n- O código `WC` funciona como id da competição nos caminhos `/competitions/WC/...`.\n- Filtro `status`: SCHEDULED, TIMED, IN_PLAY, PAUSED, LIVE, FINISHED, SUSPENDED, POSTPONED, CANCELLED, AWARDED.\n- Fases (`stage`): GROUP_STAGE, LAST_32, LAST_16, QUARTER_FINALS, SEMI_FINALS, THIRD_PLACE, FINAL.\n- Grupos (`group`): GROUP_A … GROUP_L (formato 2026 com 48 seleções).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "X-Auth-Token", "type": "string" },
+      { "key": "value", "value": "{{token}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.football-data.org/v4", "type": "string" },
+    { "key": "token", "value": "cf348281b5e040a9a6cfa2b141c37340", "type": "string" },
+    { "key": "competition", "value": "WC", "type": "string", "description": "Código da Copa do Mundo. Aceito como id no caminho." },
+    { "key": "competitionId", "value": "2000", "type": "string", "description": "Id numérico da Copa, usado no filtro global /matches?competitions=" },
+    { "key": "teamId", "value": "764", "type": "string", "description": "764 = Brazil" },
+    { "key": "matchId", "value": "537327", "type": "string", "description": "Jogo de exemplo (Mexico x South Africa, abertura)" },
+    { "key": "areaId", "value": "2013", "type": "string", "description": "Exemplo de área (país/continente). Veja a lista em /areas" },
+    { "key": "personId", "value": "", "type": "string", "description": "Preencha com um id de jogador (ex.: vem em /teams/{{teamId}} -> squad)" },
+    { "key": "today", "value": "", "type": "string", "description": "Preenchido automaticamente pelo pré-script da request 'Jogos de HOJE'" }
+  ],
+  "item": [
+    {
+      "name": "00 - Competições",
+      "item": [
+        {
+          "name": "Listar todas as competições",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions"]
+            },
+            "description": "Lista todas as competições disponíveis na sua conta. Útil para descobrir o id de outras ligas."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar competições por área",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions?areas={{areaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions"],
+              "query": [ { "key": "areas", "value": "{{areaId}}" } ]
+            },
+            "description": "Filtra competições por uma ou mais áreas (ids separados por vírgula)."
+          },
+          "response": []
+        },
+        {
+          "name": "Detalhe da Copa (WC)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}"]
+            },
+            "description": "Dados gerais da Copa do Mundo: temporada atual, datas, etc."
+          },
+          "response": []
+        },
+        {
+          "name": "Classificação — atual",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/standings",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "standings"]
+            },
+            "description": "Tabela de classificação por grupo (type TOTAL/HOME/AWAY)."
+          },
+          "response": []
+        },
+        {
+          "name": "Classificação — por rodada (matchday)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/standings?matchday=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "standings"],
+              "query": [ { "key": "matchday", "value": "1" } ]
+            },
+            "description": "Classificação congelada em uma rodada específica."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — todos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"]
+            },
+            "description": "Todos os jogos da Copa (104 partidas no formato 2026)."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — de HOJE (data automática)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Calcula a data de hoje (YYYY-MM-DD) e grava em {{today}}",
+                  "var d = new Date();",
+                  "var iso = d.toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('today', iso);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?dateFrom={{today}}&dateTo={{today}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [
+                { "key": "dateFrom", "value": "{{today}}" },
+                { "key": "dateTo", "value": "{{today}}" }
+              ]
+            },
+            "description": "Jogos do dia atual. O pré-script preenche {{today}} sozinho ao enviar."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — AO VIVO",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?status=LIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [ { "key": "status", "value": "LIVE" } ]
+            },
+            "description": "Jogos em andamento. Dica: use também status=IN_PLAY,PAUSED."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — agendados (SCHEDULED/TIMED)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?status=TIMED",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [ { "key": "status", "value": "TIMED" } ]
+            },
+            "description": "Próximos jogos com horário definido. Troque para SCHEDULED se quiser os ainda sem horário."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — encerrados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?status=FINISHED",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [ { "key": "status", "value": "FINISHED" } ]
+            },
+            "description": "Resultados de jogos já finalizados."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — por rodada (matchday=1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?matchday=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [ { "key": "matchday", "value": "1" } ]
+            },
+            "description": "Jogos de uma rodada específica da fase de grupos."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — fase de grupos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?stage=GROUP_STAGE",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [ { "key": "stage", "value": "GROUP_STAGE" } ]
+            },
+            "description": "Filtra por fase. Outras: LAST_32, LAST_16, QUARTER_FINALS, SEMI_FINALS, THIRD_PLACE, FINAL."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — oitavas (LAST_16)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?stage=LAST_16",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [ { "key": "stage", "value": "LAST_16" } ]
+            },
+            "description": "Jogos do mata-mata (oitavas de final)."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos — intervalo de datas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/matches?dateFrom=2026-06-11&dateTo=2026-06-20",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "matches"],
+              "query": [
+                { "key": "dateFrom", "value": "2026-06-11" },
+                { "key": "dateTo", "value": "2026-06-20" }
+              ]
+            },
+            "description": "Jogos entre duas datas (formato YYYY-MM-DD)."
+          },
+          "response": []
+        },
+        {
+          "name": "Seleções participantes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/teams",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "teams"]
+            },
+            "description": "As 48 seleções da Copa, com id, escudo e elenco."
+          },
+          "response": []
+        },
+        {
+          "name": "Artilheiros (top 10)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/competitions/{{competition}}/scorers?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["competitions", "{{competition}}", "scorers"],
+              "query": [ { "key": "limit", "value": "10" } ]
+            },
+            "description": "Ranking de goleadores. Ajuste o limit para ver mais."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 - Partidas (global)",
+      "item": [
+        {
+          "name": "Listar partidas (todas as competições)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/matches",
+              "host": ["{{baseUrl}}"],
+              "path": ["matches"]
+            },
+            "description": "Jogos do dia em todas as competições da sua conta."
+          },
+          "response": []
+        },
+        {
+          "name": "Partidas filtradas pela Copa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/matches?competitions={{competitionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["matches"],
+              "query": [ { "key": "competitions", "value": "{{competitionId}}" } ]
+            },
+            "description": "Filtro global por id numérico da competição (2000 = Copa)."
+          },
+          "response": []
+        },
+        {
+          "name": "Partidas ao vivo (todas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/matches?status=LIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["matches"],
+              "query": [ { "key": "status", "value": "LIVE" } ]
+            },
+            "description": "Tudo que está rolando ao vivo agora, em qualquer competição."
+          },
+          "response": []
+        },
+        {
+          "name": "Partida por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/matches/{{matchId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["matches", "{{matchId}}"]
+            },
+            "description": "Detalhe de um jogo específico (escalação, gols, árbitro etc.)."
+          },
+          "response": []
+        },
+        {
+          "name": "Confronto direto (head-to-head)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/matches/{{matchId}}/head2head?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["matches", "{{matchId}}", "head2head"],
+              "query": [ { "key": "limit", "value": "10" } ]
+            },
+            "description": "Histórico de confrontos entre os dois times do jogo informado."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Times / Seleções",
+      "item": [
+        {
+          "name": "Listar times (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            },
+            "description": "Catálogo global de times, com paginação."
+          },
+          "response": []
+        },
+        {
+          "name": "Time por ID (Brasil)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{teamId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}"]
+            },
+            "description": "Dados do time + elenco (squad). teamId=764 é o Brasil."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos do time",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{teamId}}/matches",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "matches"]
+            },
+            "description": "Todos os jogos do time no período padrão."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos do time — próximos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{teamId}}/matches?status=SCHEDULED",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "matches"],
+              "query": [ { "key": "status", "value": "SCHEDULED" } ]
+            },
+            "description": "Próximas partidas agendadas do Brasil."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos do time — só na Copa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{teamId}}/matches?competitions={{competitionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "matches"],
+              "query": [ { "key": "competitions", "value": "{{competitionId}}" } ]
+            },
+            "description": "Jogos do Brasil somente na Copa do Mundo."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos do time — mandante",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{teamId}}/matches?venue=HOME",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{teamId}}", "matches"],
+              "query": [ { "key": "venue", "value": "HOME" } ]
+            },
+            "description": "Filtra por mando de campo (HOME ou AWAY)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Áreas",
+      "item": [
+        {
+          "name": "Listar áreas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/areas",
+              "host": ["{{baseUrl}}"],
+              "path": ["areas"]
+            },
+            "description": "Países e continentes com seus ids (use em filtros de competição)."
+          },
+          "response": []
+        },
+        {
+          "name": "Área por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/areas/{{areaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["areas", "{{areaId}}"]
+            },
+            "description": "Detalhe de uma área específica."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Jogadores",
+      "item": [
+        {
+          "name": "Jogador por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/persons/{{personId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["persons", "{{personId}}"]
+            },
+            "description": "Dados de um jogador. Preencha {{personId}} com um id real (vem no squad em /teams/{{teamId}})."
+          },
+          "response": []
+        },
+        {
+          "name": "Jogos do jogador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/persons/{{personId}}/matches?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["persons", "{{personId}}", "matches"],
+              "query": [ { "key": "limit", "value": "10" } ]
+            },
+            "description": "Partidas associadas a um jogador. Aceita filtros dateFrom/dateTo/competitions."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
